@@ -1,0 +1,17 @@
+# Build
+.build/
+*.app/
+MenubarTodo
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store

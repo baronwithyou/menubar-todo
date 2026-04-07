@@ -1,0 +1,20 @@
+{
+  "name": "menubar-todo-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for MenuBar Todo - manage tasks via command line",
+  "main": "index.js",
+  "bin": {
+    "todo": "./index.js",
+    "mbt": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["todo", "cli", "reminders", "macos"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "chalk": "^4.1.2"
+  }
+}
