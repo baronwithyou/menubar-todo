@@ -1,7 +1,7 @@
 # Build
 .build/
 *.app/
-MenubarTodo
+MenubarTodo/MenubarTodo
 
 # Dependencies
 node_modules/
