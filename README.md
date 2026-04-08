@@ -12,11 +12,35 @@
 
 ## 安装
 
+### 方式一：只安装 CLI 工具（推荐）
+
+如果你只需要命令行工具（比如配合 OpenClaw 使用），只需要三步：
+
 ```bash
-cd menubar-todo
+cd ~/code/menubar-todo/CLI
+npm install
+npm link
+```
+
+完成后 `todo` 命令就会全局可用。
+
+### 方式二：完整安装（菜单栏应用 + CLI）
+
+如果你想要菜单栏图标 + CLI，运行完整安装脚本：
+
+```bash
+cd ~/code/menubar-todo
 chmod +x install.sh
 ./install.sh
 ```
+
+这会：
+1. 安装 CLI 工具并链接到全局
+2. 编译 Swift 菜单栏应用
+3. 安装到 `/Applications/`
+4. 添加到登录项（自动启动）
+
+**注意**：首次运行菜单栏应用时，需要授权终端访问 Reminders 的权限。
 
 ## 使用
 
@@ -53,25 +77,18 @@ todo clear
 
 ### OpenClaw 集成
 
-在 OpenClaw 配置中添加：
+CLI 安装后，`todo` 命令全局可用。OpenClaw 可以直接通过 `exec` 调用：
 
-```json
-{
-  "tools": {
-    "custom": {
-      "todo": {
-        "command": "todo",
-        "description": "Manage todo list"
-      }
-    }
-  }
-}
+```bash
+todo add "下午3点开会"
+todo list
+todo done "代码审查"
 ```
 
-然后可以通过 OpenClaw 对话直接操作：
-- "帮我添加一个待办：下午3点开会"
-- "查看今天的待办"
-- "标记代码审查为完成"
+无需额外配置。直接告诉 OpenClaw：
+- "添加一个待办：xxx"
+- "查看待办"
+- "标记 xxx 为完成"
 
 ## 文件结构
 
