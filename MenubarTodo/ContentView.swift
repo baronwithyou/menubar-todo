@@ -31,8 +31,12 @@ struct TaskRowView: View {
     let item: TodoItem
     let onToggle: () -> Void
     let onDelete: () -> Void
+    let onEdit: (String) -> Void
 
     @State private var isHovered = false
+    @State private var isEditing = false
+    @State private var editText = ""
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         HStack(spacing: 12) {
@@ -58,17 +62,39 @@ struct TaskRowView: View {
                 onToggle()
             }
 
-            // 任务标题
-            Text(item.title)
-                .font(.system(size: 14))
-                .foregroundColor(item.isCompleted ? .secondary : .primary)
-                .strikethrough(item.isCompleted)
-                .lineLimit(1)
+            // 任务标题 - 编辑模式或显示模式
+            if isEditing {
+                TextField("", text: $editText)
+                    .font(.system(size: 14))
+                    .focused($isTextFieldFocused)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .onSubmit {
+                        saveEdit()
+                    }
+                    .onExitCommand {
+                        cancelEdit()
+                    }
+                    .onChange(of: isTextFieldFocused) { focused in
+                        if !focused && isEditing {
+                            saveEdit()
+                        }
+                    }
+            } else {
+                Text(item.title)
+                    .font(.system(size: 14))
+                    .foregroundColor(item.isCompleted ? .secondary : .primary)
+                    .strikethrough(item.isCompleted)
+                    .lineLimit(1)
+                    .help(item.title)
+                    .onTapGesture(count: 2) {
+                        startEditing()
+                    }
+            }
 
             Spacer()
 
-            // 删除按钮（悬停显示）
-            if isHovered {
+            // 删除按钮（悬停显示且非编辑模式）
+            if isHovered && !isEditing {
                 Image(systemName: "xmark")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.secondary)
@@ -89,6 +115,26 @@ struct TaskRowView: View {
                 isHovered = hovering
             }
         }
+    }
+
+    private func startEditing() {
+        editText = item.title
+        isEditing = true
+        isTextFieldFocused = true
+    }
+
+    private func saveEdit() {
+        let trimmed = editText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty && trimmed != item.title {
+            onEdit(trimmed)
+        }
+        isEditing = false
+        editText = ""
+    }
+
+    private func cancelEdit() {
+        isEditing = false
+        editText = ""
     }
 }
 
@@ -187,7 +233,8 @@ struct ContentView: View {
                             TaskRowView(
                                 item: item,
                                 onToggle: { viewModel.toggleItem(id: item.id) },
-                                onDelete: { viewModel.deleteItem(id: item.id) }
+                                onDelete: { viewModel.deleteItem(id: item.id) },
+                                onEdit: { newTitle in viewModel.editTask(id: item.id, newTitle: newTitle) }
                             )
                         }
                     }
@@ -340,6 +387,25 @@ class TodoViewModel: ObservableObject {
 
     func refresh() {
         loadReminders()
+    }
+
+    func editTask(id: String, newTitle: String) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        let reminder = items[index].reminder
+
+        // 乐观更新：立即修改本地状态
+        items[index].title = newTitle
+
+        // 异步保存到 EventKit
+        reminder.title = newTitle
+
+        do {
+            try eventStore?.save(reminder, commit: true)
+        } catch {
+            // 保存失败则回滚本地状态
+            items[index].title = reminder.title ?? "Untitled"
+            print("Failed to edit reminder: \(error)")
+        }
     }
 }
 
