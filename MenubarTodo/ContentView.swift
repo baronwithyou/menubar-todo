@@ -304,7 +304,23 @@ class TodoViewModel: ObservableObject {
 
         eventStore?.fetchReminders(matching: predicate) { [weak self] reminders in
             DispatchQueue.main.async {
-                let sorted = (reminders ?? []).sorted {
+                let calendar = Calendar.current
+                let today = calendar.startOfDay(for: Date())
+                
+                // 过滤：显示未完成任务 + 当天完成的任务
+                let filtered = (reminders ?? []).filter { reminder in
+                    if !reminder.isCompleted {
+                        return true // 未完成的任务始终显示
+                    }
+                    // 已完成的任务只显示当天完成的
+                    guard let completionDate = reminder.completionDate else {
+                        return false
+                    }
+                    let completionDay = calendar.startOfDay(for: completionDate)
+                    return completionDay == today
+                }
+                
+                let sorted = filtered.sorted {
                     ($0.isCompleted ? 1 : 0) < ($1.isCompleted ? 1 : 0)
                 }
                 self?.items = sorted.map { TodoItem(reminder: $0) }
